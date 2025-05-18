@@ -4,8 +4,8 @@ import os
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.types import FSInputFile
-from config import TOKEN, ADMIN_ID
-from excel_to_xml import excel_to_xml  # Импорт вашей функции конвертации
+from config import TOKEN, ADMIN_IDS
+from excel_to_xml import excel_to_xml
 
 
 bot = Bot(token=TOKEN)
@@ -20,8 +20,15 @@ os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 
+async def is_admin(user_id: int) -> bool:
+    return user_id in ADMIN_IDS
+
+
 @dp.message(Command("start"))
 async def start_cmd(message: types.Message):
+    if not await is_admin(message.from_user.id):
+        await message.answer("Доступ запрещен")
+        return
     # Отправляем сообщение пользователю
     await message.answer(
         "Здравствуйте. Это бот для формирования xml-файла. "
@@ -32,17 +39,12 @@ async def start_cmd(message: types.Message):
     template = FSInputFile(TEMPLATE_PATH)
     await message.answer_document(template)
 
-    # Уведомление админу
-    await bot.send_message(
-        ADMIN_ID,
-        f"Новый пользователь:\n"
-        f"ID: {message.from_user.id}\n"
-        f"Username: @{message.from_user.username}"
-    )
-
 
 @dp.message()
 async def handle_docs(message: types.Message):
+    if not await is_admin(message.from_user.id):
+        await message.answer("Доступ запрещен")
+        return
     if not message.document:
         await message.answer("Пожалуйста, отправьте заполненный Excel-файл")
         return
