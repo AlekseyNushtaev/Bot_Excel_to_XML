@@ -1,0 +1,2 @@
+TOKEN = 'test'
+ADMIN_ID = 1012882762
